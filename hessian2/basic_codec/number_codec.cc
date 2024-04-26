@@ -17,30 +17,30 @@ std::unique_ptr<double> Decoder::decode() {
   auto out = std::make_unique<double>();
   uint8_t code = reader_->readBE<uint8_t>().second;
   switch (code) {
-    // ::= x5b                   # 0.0
-    case 0x5b:
+    // ::= x67                   # 0.0
+    case 0x67:
       *out.get() = 0.0;
       return out;
-    // ::= x5c                   # 1.0
-    case 0x5c:
+    // ::= x68                   # 1.0
+    case 0x68:
       *out.get() = 1.0;
       return out;
-    // ::= x5d b0                # byte cast to double (-128.0 to 127.0)
-    case 0x5d:
+    // ::= x69 b0                # byte cast to double (-128.0 to 127.0)
+    case 0x69:
       if (reader_->byteAvailable() < 1) {
         return nullptr;
       }
       *out.get() = static_cast<double>(reader_->readBE<int8_t>().second);
       return out;
-    // ::= x5e b1 b0             # short cast to double
-    case 0x5e:
+    // ::= x6a b1 b0             # short cast to double
+    case 0x6a:
       if (reader_->byteAvailable() < 2) {
         return nullptr;
       }
       *out.get() = static_cast<double>(reader_->readBE<int16_t>().second);
       return out;
-    // ::= x5f b3 b2 b1 b0       # 32-bit float cast to double
-    case 0x5f:
+    // ::= x6b b3 b2 b1 b0       # 32-bit float cast to double
+    case 0x6b:
       if (reader_->byteAvailable() < 4) {
         return nullptr;
       }
@@ -62,23 +62,23 @@ bool Encoder::encode(const double &value) {
   int32_t int_value = static_cast<int32_t>(value);
   if (int_value == value) {
     if (int_value == 0) {
-      writer_->writeByte(0x5b);
+      writer_->writeByte(0x67);
       return true;
     }
 
     if (int_value == 1) {
-      writer_->writeByte(0x5c);
+      writer_->writeByte(0x68);
       return true;
     }
 
     if (int_value >= -0x80 && int_value < 0x80) {
-      writer_->writeByte(0x5d);
+      writer_->writeByte(0x69);
       writer_->writeBE<int8_t>(int_value);
       return true;
     }
 
     if (int_value >= -0x8000 && int_value < 0x8000) {
-      writer_->writeByte(0x5e);
+      writer_->writeByte(0x6a);
       writer_->writeBE<int8_t>(int_value >> 8);
       writer_->writeBE<uint8_t>(int_value);
       return true;
@@ -262,7 +262,7 @@ std::unique_ptr<int64_t> Decoder::decode() {
                    reader_->readBE<uint16_t>().second;
       return out;
     // ::= x59 b3 b2 b1 b0       # 32-bit integer cast to long
-    case 0x59:
+    case 0x77:
       if (reader_->byteAvailable() < 4) {
         return nullptr;
       }
@@ -306,7 +306,7 @@ bool Encoder::encode(const int64_t &data) {
   }
 
   if (data >= -0x80000000L && data <= 0x7fffffffL) {
-    writer_->writeByte(0x59);
+    writer_->writeByte(0x77);
     writer_->writeBE<int32_t>(data);
     return true;
   }

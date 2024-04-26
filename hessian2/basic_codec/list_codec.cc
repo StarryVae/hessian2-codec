@@ -32,28 +32,28 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
     return true;
   };
 
-  auto ReadObjectUntilEnd = [&]() -> bool {
-    auto ret = reader_->peek<uint8_t>();
-    if (!ret.first) {
-      return false;
-    }
-
-    while (ret.second != 'Z') {
-      auto o = decode<Object>();
-      if (!o) {
-        return false;
-      }
-      obj_list.values_.emplace_back(std::move(o));
-      ret = reader_->peek<uint8_t>();
+  /*  auto ReadObjectUntilEnd = [&]() -> bool {
+      auto ret = reader_->peek<uint8_t>();
       if (!ret.first) {
         return false;
       }
-    }
 
-    // Skip last 'Z'
-    reader_->read<uint8_t>();
-    return true;
-  };
+      while (ret.second != 'z') {
+        auto o = decode<Object>();
+        if (!o) {
+          return false;
+        }
+        obj_list.values_.emplace_back(std::move(o));
+        ret = reader_->peek<uint8_t>();
+        if (!ret.first) {
+          return false;
+        }
+      }
+
+      // Skip last 'Z'
+      reader_->read<uint8_t>();
+      return true;
+    };*/
 
   auto type_str = decode<Object::TypeRef>();
   if (!type_str) {
@@ -63,34 +63,49 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
   obj_list.type_name_ = std::move(type_str->type_);
 
   switch (code) {
-    case 0x55: {
-      if (!ReadObjectUntilEnd()) {
+    case 'v': {
+      auto ret = decode<int32_t>();
+      if (!ret) {
+        return nullptr;
+      }
+      if (!ReadNumsObject(*ret)) {
         return nullptr;
       }
       break;
     }
 
     case 'V': {
-      auto ret = decode<int32_t>();
-      if (!ret) {
+      auto ret = reader_->read<uint8_t>();
+      if (!ret.first) {
         return nullptr;
       }
+      auto len_code = ret.second;
 
-      if (!ReadNumsObject(*ret)) {
-        return nullptr;
-      }
-      break;
-    }
-    case 0x70:
-    case 0x71:
-    case 0x72:
-    case 0x73:
-    case 0x74:
-    case 0x75:
-    case 0x76:
-    case 0x77: {
-      if (!ReadNumsObject(code - 0x70)) {
-        return nullptr;
+      switch (len_code) {
+        case 'n': {
+          auto ret = reader_->readBE<uint8_t>();
+          if (!ret.first) {
+            return nullptr;
+          }
+          auto len = ret.second;
+          if (!ReadNumsObject(len)) {
+            return nullptr;
+          }
+          break;
+        }
+        case 'l': {
+          auto ret = reader_->readBE<uint32_t>();
+          if (!ret.first) {
+            return nullptr;
+          }
+          auto len = ret.second;
+          if (!ReadNumsObject(len)) {
+            return nullptr;
+          }
+          break;
+        }
+        default:
+          return nullptr;
       }
       break;
     }
@@ -129,59 +144,65 @@ std::unique_ptr<UntypedListObject> Decoder::decode() {
     return true;
   };
 
-  auto ReadObjectUntilEnd = [&]() -> bool {
-    auto ret = reader_->peek<uint8_t>();
-    if (!ret.first) {
-      return false;
-    }
-
-    while (ret.second != 'Z') {
-      auto o = decode<Object>();
-      if (!o) {
-        return false;
-      }
-      obj_list.emplace_back(std::move(o));
-      ret = reader_->peek<uint8_t>();
+  /*  auto ReadObjectUntilEnd = [&]() -> bool {
+      auto ret = reader_->peek<uint8_t>();
       if (!ret.first) {
         return false;
       }
-    }
-    // Skip last 'Z'
-    reader_->read<uint8_t>();
-    return true;
-  };
 
-  switch (code) {
-    case 0x57: {
-      if (!ReadObjectUntilEnd()) {
-        return nullptr;
+      while (ret.second != 'z') {
+        auto o = decode<Object>();
+        if (!o) {
+          return false;
+        }
+        obj_list.emplace_back(std::move(o));
+        ret = reader_->peek<uint8_t>();
+        if (!ret.first) {
+          return false;
+        }
       }
-      break;
-    }
-    case 0x58: {
-      auto ret = decode<int32_t>();
-      if (!ret) {
-        return nullptr;
-      }
-      if (!ReadNumsObject(*ret)) {
-        return nullptr;
-      }
-      break;
-    }
-    case 0x78:
-    case 0x79:
-    case 0x7a:
-    case 0x7b:
-    case 0x7c:
-    case 0x7d:
-    case 0x7e:
-    case 0x7f: {
-      if (!ReadNumsObject(code - 0x78)) {
-        return nullptr;
-      }
-      break;
-    }
+      // Skip last 'Z'
+      reader_->read<uint8_t>();
+      return true;
+    };*/
+
+  if (code != 'V') {
+    return nullptr;
   }
+
+  auto ret1 = reader_->read<uint8_t>();
+  if (!ret1.first) {
+    return nullptr;
+  }
+  auto len_code = ret1.second;
+
+  switch (len_code) {
+    case 'n': {
+      auto ret = reader_->readBE<uint8_t>();
+      if (!ret.first) {
+        return nullptr;
+      }
+      auto len = ret.second;
+      if (!ReadNumsObject(len)) {
+        return nullptr;
+      }
+      break;
+    }
+    case 'l': {
+      auto ret = reader_->readBE<uint32_t>();
+      if (!ret.first) {
+        return nullptr;
+      }
+      auto len = ret.second;
+      if (!ReadNumsObject(len)) {
+        return nullptr;
+      }
+      break;
+    }
+    default:
+      return nullptr;
+  }
+
   result->setUntypedList(std::move(obj_list));
   return result;
 }
@@ -196,19 +217,29 @@ bool Encoder::encode(const TypedListObject& value) {
   Object::TypeRef type_ref(typed_list_value.type_name_);
   auto len = typed_list_value.values_.size();
 
-  if (len <= 7) {
-    writer_->writeByte(static_cast<uint8_t>(0x70 + len));
-  } else {
+  auto r = getTypeRef(type_ref.type_);
+  if (r == -1) {
     writer_->writeByte('V');
-  }
-
-  encode<Object::TypeRef>(type_ref);
-  if (len > 7) {
+    encode<Object::TypeRef>(type_ref);
+    if (len < 0x100) {
+      writer_->writeByte('n');
+      writer_->writeBE<uint8_t>(len);
+    } else {
+      writer_->writeByte('l');
+      writer_->writeBE<uint32_t>(len);
+    }
+  } else {
+    writer_->writeByte('v');
+    encode<Object::TypeRef>(type_ref);
     encode<int32_t>(len);
   }
 
   for (size_t i = 0; i < len; i++) {
     encode<Object>(*typed_list_value.values_[i]);
+  }
+
+  if (r == -1) {
+    writer_->writeByte('z');
   }
 
   return true;
@@ -223,16 +254,21 @@ bool Encoder::encode(const UntypedListObject& value) {
 
   auto len = untyped_list_value.size();
 
-  if (len <= 7) {
-    writer_->writeByte(static_cast<uint8_t>(0x78 + len));
+  writer_->writeByte('V');
+
+  if (len < 0x100) {
+    writer_->writeByte('n');
+    writer_->writeBE<uint8_t>(len);
   } else {
-    writer_->writeByte(static_cast<uint8_t>(0x58));
-    encode<int32_t>(len);
+    writer_->writeByte('l');
+    writer_->writeBE<uint32_t>(len);
   }
 
   for (size_t i = 0; i < len; i++) {
     encode<Object>(*(untyped_list_value)[i]);
   }
+
+  writer_->writeByte('z');
 
   return true;
 }

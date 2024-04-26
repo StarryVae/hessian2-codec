@@ -299,7 +299,7 @@ bool readChunkString(std::string &output, bool &has_surrogate, Reader &reader,
 
 bool decodeStringWithReader(std::string &out, bool &has_surrogate,
                             Reader &reader) {
-  size_t delta_length = 0;
+  // size_t delta_length = 0;
   auto ret = reader.read<uint8_t>();
   if (!ret.first) {
     return false;
@@ -342,18 +342,18 @@ bool decodeStringWithReader(std::string &out, bool &has_surrogate,
       return readChunkString(out, has_surrogate, reader, code - 0x00, true);
     }
 
-    // ::= [x30-x33] <utf8-data> # string of length
-    case 0x30:
-    case 0x31:
-    case 0x32:
-    case 0x33: {
-      auto res = reader.read<uint8_t>();
-      if (!res.first) {
-        return false;
-      }
-      delta_length = (code - 0x30) * 256 + res.second;
-      return readChunkString(out, has_surrogate, reader, delta_length, true);
-    }
+      // ::= [x30-x33] <utf8-data> # string of length
+      /* case 0x30:
+       case 0x31:
+       case 0x32:
+       case 0x33: {
+         auto res = reader.read<uint8_t>();
+         if (!res.first) {
+           return false;
+         }
+         delta_length = (code - 0x30) * 256 + res.second;
+         return readChunkString(out, has_surrogate, reader, delta_length, true);
+       }*/
 
     case 0x53:  // 0x53 is 'S', 'S' b1 b0 <utf8-data>
     {
@@ -363,7 +363,7 @@ bool decodeStringWithReader(std::string &out, bool &has_surrogate,
       }
       return readChunkString(out, has_surrogate, reader, res.second, true);
     }
-    case 0x52:  // 0x52 b1 b0 <utf8-data>
+    case 0x73:  // 0x52 b1 b0 <utf8-data>
     {
       auto res = reader.readBE<uint16_t>();
       if (!res.first) {
@@ -459,7 +459,7 @@ bool Encoder::encode(const absl::string_view &data) {
   const uint16_t step_length = STRING_CHUNK_SIZE;
   int pos = 0;
   while (static_cast<uint64_t>(length) > STRING_CHUNK_SIZE) {
-    writer_->writeByte(0x52);
+    writer_->writeByte(0x73);
     writer_->writeBE<uint16_t>(step_length);
     length -= step_length;
     auto raw_offset = per_chunk_bytes_offsets[pos++];
@@ -485,15 +485,15 @@ bool Encoder::encode(const absl::string_view &data) {
   }
 
   // [x30-x34] <utf8-data>
-  if (length <= 1023) {
-    uint8_t code = length / 256;
-    uint8_t remain = length % 256;
-    writer_->writeByte(0x30 + code);
-    writer_->writeByte(remain);
-    writer_->rawWrite(
-        data_view.substr(str_offset, data_view_size - str_offset));
-    return true;
-  }
+  /*  if (length <= 1023) {
+      uint8_t code = length / 256;
+      uint8_t remain = length % 256;
+      writer_->writeByte(0x30 + code);
+      writer_->writeByte(remain);
+      writer_->rawWrite(
+          data_view.substr(str_offset, data_view_size - str_offset));
+      return true;
+    }*/
 
   writer_->writeByte(0x53);
   writer_->writeBE<uint16_t>(length);

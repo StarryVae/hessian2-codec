@@ -7,15 +7,33 @@ template <>
 std::unique_ptr<RefObject> Decoder::decode() {
   auto ret = reader_->read<uint8_t>();
   ABSL_ASSERT(ret.first);
-  ABSL_ASSERT(ret.second == 0x51);
-  auto ref = decode<int32_t>();
-  if (!ref) {
+
+  uint32_t ref;
+  switch (ret.second) {
+    case 0x4a: {
+      auto ret = reader_->read<uint8_t>();
+      if (!ret.first) {
+        return nullptr;
+      }
+      ref = ret.second;
+      break;
+    }
+    case 0x52: {
+      auto ret = reader_->readBE<uint32_t>();
+      if (!ret.first) {
+        return nullptr;
+      }
+      ref = ret.second;
+      break;
+    }
+    default:
+      return nullptr;
+  }
+
+  if (ref >= values_ref_.size()) {
     return nullptr;
   }
-  if (static_cast<uint32_t>(*ref) >= values_ref_.size()) {
-    return nullptr;
-  }
-  return std::make_unique<RefObject>(values_ref_[*ref]);
+  return std::make_unique<RefObject>(values_ref_[ref]);
 }
 
 template <>
@@ -24,8 +42,15 @@ bool Encoder::encode(const RefObject& value) {
   ABSL_ASSERT(d.has_value());
   auto ref = getValueRef(d.value());
   ABSL_ASSERT(ref != -1);
-  writer_->writeByte<uint8_t>(0x51);
-  encode<int32_t>(ref);
+
+  if (ref < 0x100) {
+    writer_->writeByte<uint8_t>(0x4a);
+    writer_->writeByte<uint8_t>(ref);
+    return true;
+  }
+
+  writer_->writeByte<uint8_t>(0x52);
+  writer_->writeBE<uint32_t>(ref);
   return true;
 }
 

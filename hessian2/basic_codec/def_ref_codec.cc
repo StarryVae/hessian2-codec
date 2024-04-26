@@ -15,16 +15,20 @@ std::unique_ptr<Object::Definition> Decoder::decode() {
   Object::RawDefinitionSharedPtr def =
       std::make_shared<Object::RawDefinition>();
   auto code = ret.second;
-  if (code == 'C') {
-    auto type_name = decode<std::string>();
-    if (!type_name) {
+  if (code == 'O') {
+    auto type_len = decode<int32_t>();
+    if (!type_len) {
       return nullptr;
     }
+    std::string type_name;
+    type_name.resize(*type_len);
+    reader_->readNBytes(type_name.data(), *type_len);
+
     auto field_len = decode<int32_t>();
     if (!field_len) {
       return nullptr;
     }
-    def->type_ = *type_name;
+    def->type_ = type_name;
     def->field_names_.reserve(*field_len);
 
     for (int i = 0; i < *field_len; i++) {
@@ -35,7 +39,7 @@ std::unique_ptr<Object::Definition> Decoder::decode() {
       def->field_names_.push_back(*field_name);
     }
     def_ref_.push_back(def);
-  } else if (code == 'O') {
+  } else if (code == 'o') {
     auto ref_number = decode<int32_t>();
     if (!ref_number) {
       return nullptr;
@@ -45,12 +49,6 @@ std::unique_ptr<Object::Definition> Decoder::decode() {
     }
 
     def = def_ref_[*ref_number];
-  } else if (code >= 0x60 && code <= 0x6f) {
-    uint32_t ref_num = code - 0x60;
-    if (ref_num >= def_ref_.size()) {
-      return nullptr;
-    }
-    def = def_ref_[ref_num];
   } else {
     return nullptr;
   }
@@ -63,23 +61,20 @@ template <>
 bool Encoder::encode(const Object::RawDefinition &value) {
   auto r = getDefRef(value);
   if (r == -1) {
-    writer_->writeByte('C');
+    writer_->writeByte('O');
     def_ref_.push_back(std::make_shared<Object::RawDefinition>(value));
-    encode<std::string>(value.type_);
+    encode<int32_t>(value.type_.length());
+    writer_->rawWrite(value.type_);
     encode<int32_t>(value.field_names_.size());
     for (const auto &field_name : value.field_names_) {
       encode<std::string>(field_name);
     }
     encode<Object::RawDefinition>(value);
   } else {
-    if (r <= 15) {
-      uint8_t code = 0x60 + r;
-      writer_->writeByte(code);
-    } else {
-      writer_->writeByte('O');
-      encode<int32_t>(r);
-    }
+    writer_->writeByte('o');
+    encode<int32_t>(r);
   }
+
   return true;
 }
 

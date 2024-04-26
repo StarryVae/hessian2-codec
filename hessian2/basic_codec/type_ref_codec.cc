@@ -9,17 +9,23 @@ std::unique_ptr<Object::TypeRef> Decoder::decode() {
     return nullptr;
   }
   auto code = ret.second;
-  if (code <= 31 || (code >= 48 && code <= 51) || code == 82 || code == 83) {
-    // String type
-    auto type_str = decode<std::string>();
-    if (!type_str) {
+
+  if (code == 't') {
+    reader_->read<uint8_t>();
+    auto ret_int = reader_->readBE<uint16_t>();
+    if (!ret_int.first) {
       return nullptr;
     }
-    types_ref_.push_back(*type_str);
-    return std::make_unique<Object::TypeRef>(*type_str);
+
+    std::string output;
+    output.resize(ret_int.second);
+    reader_->readNBytes(output.data(), ret_int.second);
+
+    types_ref_.push_back(output);
+
+    return std::make_unique<Object::TypeRef>(output);
   }
 
-  // int32_t
   auto ret_int = decode<int32_t>();
   if (!ret_int) {
     return nullptr;
@@ -40,7 +46,9 @@ bool Encoder::encode(const Object::TypeRef &value) {
   auto r = getTypeRef(value.type_);
   if (r == -1) {
     types_ref_.emplace(value.type_, types_ref_.size());
-    encode<std::string>(value.type_);
+    writer_->writeByte('t');
+    writer_->writeBE<uint16_t>(value.type_.length());
+    writer_->rawWrite(value.type_);
   } else {
     encode<int32_t>(r);
   }

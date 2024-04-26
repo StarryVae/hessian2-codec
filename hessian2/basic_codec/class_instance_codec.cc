@@ -17,7 +17,7 @@ std::unique_ptr<ClassInstanceObject> Decoder::decode() {
   }
 
   // Read the actual definition
-  if (ret.second == 'C') {
+  if (ret.second == 'O') {
     auto def = decode<Object::Definition>();
     if (!def) {
       return nullptr;

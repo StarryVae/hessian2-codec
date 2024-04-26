@@ -9,13 +9,13 @@ std::unique_ptr<T> readDate(ReaderPtr &reader) {
   auto out = std::make_unique<T>();
   uint8_t code = reader->read<uint8_t>().second;
   switch (code) {
-    case 0x4b:
-      if (reader->byteAvailable() < 4) {
-        return nullptr;
-      }
-      return std::make_unique<T>(std::chrono::duration_cast<T>(
-          std::chrono::minutes(reader->readBE<int32_t>().second)));
-    case 0x4a:
+      /*  case 0x4b:
+          if (reader->byteAvailable() < 4) {
+            return nullptr;
+          }
+          return std::make_unique<T>(std::chrono::duration_cast<T>(
+              std::chrono::minutes(reader->readBE<int32_t>().second)));*/
+    case 0x64:
       if (reader->byteAvailable() < 8) {
         return nullptr;
       }
@@ -27,17 +27,17 @@ std::unique_ptr<T> readDate(ReaderPtr &reader) {
 
 template <typename T>
 void writeDate(WriterPtr &writer, const T &value) {
-  int64_t value_in_min =
-      std::chrono::duration_cast<std::chrono::minutes>(value).count();
+  //  int64_t value_in_min =
+  // std::chrono::duration_cast<std::chrono::minutes>(value).count();
   int64_t value_in_ms =
       std::chrono::duration_cast<std::chrono::milliseconds>(value).count();
-  if (value_in_min * 60000 == value_in_ms) {
-    writer->writeByte(0x4b);
-    writer->writeBE<int32_t>(value_in_min);
-  } else {
-    writer->writeByte(0x4a);
-    writer->writeBE<int64_t>(value_in_ms);
-  }
+  //  if (value_in_min * 60000 == value_in_ms) {
+  //    writer->writeByte(0x4b);
+  //    writer->writeBE<int32_t>(value_in_min);
+  //  } else {
+  writer->writeByte(0x64);
+  writer->writeBE<int64_t>(value_in_ms);
+  //  }
 }
 
 }  // namespace
@@ -90,19 +90,18 @@ std::unique_ptr<std::chrono::months> Decoder::decode() {
 
 template <>
 bool Encoder::encode(const std::chrono::minutes &value) {
-  writer_->writeByte(0x4b);
-  writer_->writeBE<int32_t>(value.count());
+  writeDate<std::chrono::minutes>(writer_, value);
   return true;
 }
 
 template <>
 bool Encoder::encode(const std::chrono::milliseconds &value) {
-  std::chrono::minutes value_min =
-      std::chrono::duration_cast<std::chrono::minutes>(value);
-  if (value_min.count() * 60000 == value.count()) {
-    return encode<std::chrono::minutes>(value_min);
-  }
-  writer_->writeByte(0x4a);
+  /*  std::chrono::minutes value_min =
+        std::chrono::duration_cast<std::chrono::minutes>(value);
+    if (value_min.count() * 60000 == value.count()) {
+      return encode<std::chrono::minutes>(value_min);
+    }*/
+  writer_->writeByte(0x64);
   writer_->writeBE<int64_t>(value.count());
   return true;
 }

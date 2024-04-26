@@ -2,8 +2,8 @@
 
 namespace Hessian2 {
 
-//# map/object
-// ::= 'M' type (value value)* 'Z'  # key, value map pairs
+// # map/object
+//  ::= 'M' type (value value)* 'Z'  # key, value map pairs
 template <>
 std::unique_ptr<TypedMapObject> Decoder::decode() {
   std::string type;
@@ -28,7 +28,7 @@ std::unique_ptr<TypedMapObject> Decoder::decode() {
     return nullptr;
   }
 
-  while (ret.second != 'Z') {
+  while (ret.second != 'z') {
     auto key = decode<Object>();
     if (!key) {
       return nullptr;
@@ -63,14 +63,14 @@ std::unique_ptr<UntypedMapObject> Decoder::decode() {
   auto ret = reader_->read<uint8_t>();
   ABSL_ASSERT(ret.first);
   auto code = ret.second;
-  ABSL_ASSERT(code == 'H');
+  ABSL_ASSERT(code == 'M');
 
   ret = reader_->peek<uint8_t>();
   if (!ret.first) {
     return nullptr;
   }
 
-  while (ret.second != 'Z') {
+  while (ret.second != 'z') {
     auto key = decode<Object>();
     if (!key) {
       return nullptr;
@@ -107,7 +107,7 @@ bool Encoder::encode(const TypedMapObject& value) {
     encode<Object>(*elem.first);
     encode<Object>(*elem.second);
   }
-  writer_->writeByte('Z');
+  writer_->writeByte('z');
   return true;
 }
 
@@ -117,12 +117,12 @@ bool Encoder::encode(const UntypedMapObject& value) {
   auto untyped_map = value.toUntypedMap();
   ABSL_ASSERT(untyped_map.has_value());
   auto& untyped_map_value = untyped_map.value().get();
-  writer_->writeByte('H');
+  writer_->writeByte('M');
   for (const auto& elem : untyped_map_value) {
     encode<Object>(*elem.first);
     encode<Object>(*elem.second);
   }
-  writer_->writeByte('Z');
+  writer_->writeByte('z');
   return true;
 }
 
