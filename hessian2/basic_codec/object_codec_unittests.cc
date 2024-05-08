@@ -83,7 +83,7 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Long Object
-    unsigned char buf[] = {0x59, 0x00, 0x00, 0x01, 0x2c};
+    unsigned char buf[] = {0x77, 0x00, 0x00, 0x01, 0x2c};
     std::string data(reinterpret_cast<char *>(buf), 5);
     LongObject o(300);
     decodeSucc<Object>(data, o, 5);
@@ -100,15 +100,16 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Date Object
-    unsigned char buf[] = {0x4b, 0x00, 0x00, 0x00, 0x00};
-    std::string data(reinterpret_cast<char *>(buf), 5);
+    unsigned char buf[] = {0x64, 0x00, 0x00, 0x00, 0x00,
+                           0x00, 0x00, 0x00, 0x00};
+    std::string data(reinterpret_cast<char *>(buf), 9);
     DateObject o(std::chrono::milliseconds(0));
-    decodeSucc<Object>(data, o, 5);
+    decodeSucc<Object>(data, o, 9);
   }
 
   {
     // Double Object
-    unsigned char buf[] = {0x5d, 0x7f};
+    unsigned char buf[] = {0x69, 0x7f};
     std::string data(reinterpret_cast<char *>(buf), 2);
     DoubleObject o(127.0);
     decodeSucc<Object>(data, o, 2);
@@ -116,7 +117,8 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Typed list Object
-    unsigned char buf[] = {'V', 0x04, '[', 'i', 'n', 't', 0x92, 0x90, 0x91};
+    unsigned char buf[] = {'V', 't', 0x00, 0x04, '[',  'i', 'n',
+                           't', 'n', 0x02, 0x90, 0x91, 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::UntypedList o_list;
     o_list.emplace_back(std::make_unique<IntegerObject>(0));
@@ -128,7 +130,7 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Untyped list Object
-    unsigned char buf[] = {0x57, 0x90, 0x91, 'Z'};
+    unsigned char buf[] = {'V', 'n', 0x02, 0x90, 0x91, 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::UntypedList o_list;
     o_list.emplace_back(std::make_unique<IntegerObject>(0));
@@ -139,8 +141,8 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Typed map Object
-    unsigned char buf[] = {'M', 0x03, 'c',  'o', 'm', 0x05, 'c', 'o', 'l',
-                           'o', 'r',  0x05, 'h', 'e', 'l',  'l', 'o', 'Z'};
+    unsigned char buf[] = {'M', 't', 0x00, 0x03, 'c', 'o', 'm', 0x05, 'c', 'o',
+                           'l', 'o', 'r',  0x05, 'h', 'e', 'l', 'l',  'o', 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::TypedMap o_map;
     o_map.type_name_ = "com";
@@ -153,8 +155,8 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Untyped map Object
-    unsigned char buf[] = {'H',  0x05, 'c', 'o', 'l', 'o', 'r',
-                           0x05, 'h',  'e', 'l', 'l', 'o', 'Z'};
+    unsigned char buf[] = {'M',  0x05, 'c', 'o', 'l', 'o', 'r',
+                           0x05, 'h',  'e', 'l', 'l', 'o', 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::UntypedMap o_map;
     o_map.emplace(std::make_unique<StringObject>(absl::string_view("color")),
@@ -165,10 +167,10 @@ TEST_F(ObjectCodecTest, Decode) {
 
   {
     // Class instance Object
-    unsigned char buf[] = {'C',  0x05, 'h',  'e',  'l', 'l',  'o', 0x92, 0x05,
-                           'c',  'o',  'l',  'o',  'r', 0x05, 'm', 'o',  'd',
-                           'e',  'l',  0x60, 0x05, 'g', 'r',  'e', 'e',  'n',
-                           0x05, 'c',  'i',  'v',  'i', 'c'};
+    unsigned char buf[] = {'O', 0x95, 'h', 'e',  'l',  'l',  'o', 0x92, 0x05,
+                           'c', 'o',  'l', 'o',  'r',  0x05, 'm', 'o',  'd',
+                           'e', 'l',  'o', 0x90, 0x05, 'g',  'r', 'e',  'e',
+                           'n', 0x05, 'c', 'i',  'v',  'i',  'c'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::ClassInstance instance;
     instance.data_.emplace_back(
@@ -219,15 +221,16 @@ TEST_F(ObjectCodecTest, encode) {
 
   {
     // Date Object
-    unsigned char buf[] = {0x4b, 0x00, 0x00, 0x00, 0x00};
-    std::string data(reinterpret_cast<char *>(buf), 5);
+    unsigned char buf[] = {0x64, 0x00, 0x00, 0x00, 0x00,
+                           0x00, 0x00, 0x00, 0x00};
+    std::string data(reinterpret_cast<char *>(buf), 9);
     DateObject o(std::chrono::milliseconds(0));
     encodeSucc<Object>(o, data.size(), data);
   }
 
   {
     // Double Object
-    unsigned char buf[] = {0x5d, 0x7f};
+    unsigned char buf[] = {0x69, 0x7f};
     std::string data(reinterpret_cast<char *>(buf), 2);
     DoubleObject o(127.0);
     encodeSucc<Object>(o, data.size(), data);
@@ -235,7 +238,8 @@ TEST_F(ObjectCodecTest, encode) {
 
   {
     // Typed list Object
-    unsigned char buf[] = {0x72, 0x04, '[', 'i', 'n', 't', 0x90, 0x91};
+    unsigned char buf[] = {'V', 't', 0x00, 0x04, '[',  'i', 'n',
+                           't', 'n', 0x02, 0x90, 0x91, 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::UntypedList o_list;
     o_list.emplace_back(std::make_unique<IntegerObject>(0));
@@ -247,7 +251,7 @@ TEST_F(ObjectCodecTest, encode) {
 
   {
     // Untyped list Object
-    unsigned char buf[] = {0x7a, 0x90, 0x91};
+    unsigned char buf[] = {'V', 'n', 0x02, 0x90, 0x91, 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::UntypedList o_list;
     o_list.emplace_back(std::make_unique<IntegerObject>(0));
@@ -258,8 +262,8 @@ TEST_F(ObjectCodecTest, encode) {
 
   {
     // Typed map Object
-    unsigned char buf[] = {'M', 0x03, 'c',  'o', 'm', 0x05, 'c', 'o', 'l',
-                           'o', 'r',  0x05, 'h', 'e', 'l',  'l', 'o', 'Z'};
+    unsigned char buf[] = {'M', 't', 0x00, 0x03, 'c', 'o', 'm', 0x05, 'c', 'o',
+                           'l', 'o', 'r',  0x05, 'h', 'e', 'l', 'l',  'o', 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::TypedMap o_map;
     o_map.type_name_ = "com";
@@ -272,8 +276,8 @@ TEST_F(ObjectCodecTest, encode) {
 
   {
     // Untyped map Object
-    unsigned char buf[] = {'H',  0x05, 'c', 'o', 'l', 'o', 'r',
-                           0x05, 'h',  'e', 'l', 'l', 'o', 'Z'};
+    unsigned char buf[] = {'M',  0x05, 'c', 'o', 'l', 'o', 'r',
+                           0x05, 'h',  'e', 'l', 'l', 'o', 'z'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::UntypedMap o_map;
     o_map.emplace(std::make_unique<StringObject>(absl::string_view("color")),
@@ -284,10 +288,10 @@ TEST_F(ObjectCodecTest, encode) {
 
   {
     // Class instance Object
-    unsigned char buf[] = {'C',  0x05, 'h',  'e',  'l', 'l',  'o', 0x92, 0x05,
-                           'c',  'o',  'l',  'o',  'r', 0x05, 'm', 'o',  'd',
-                           'e',  'l',  0x60, 0x05, 'g', 'r',  'e', 'e',  'n',
-                           0x05, 'c',  'i',  'v',  'i', 'c'};
+    unsigned char buf[] = {'O', 0x95, 'h', 'e',  'l',  'l',  'o', 0x92, 0x05,
+                           'c', 'o',  'l', 'o',  'r',  0x05, 'm', 'o',  'd',
+                           'e', 'l',  'o', 0x90, 0x05, 'g',  'r', 'e',  'e',
+                           'n', 0x05, 'c', 'i',  'v',  'i',  'c'};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::ClassInstance instance;
     instance.data_.emplace_back(

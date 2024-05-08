@@ -21,13 +21,20 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
 
   auto code = ret.second;
 
-  auto ReadNumsObject = [&](int nums) -> bool {
+  auto ReadNumsObject = [&](int nums, bool end) -> bool {
     for (int i = 0; i < nums; i++) {
       auto o = decode<Object>();
       if (!o) {
         return false;
       }
       obj_list.values_.emplace_back(std::move(o));
+    }
+    if (end) {
+      // Skip last 'z'
+      auto ret = reader_->read<uint8_t>();
+      if (!ret.first || ret.second != 'z') {
+        return false;
+      }
     }
     return true;
   };
@@ -62,13 +69,14 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
 
   obj_list.type_name_ = std::move(type_str->type_);
 
+  bool end = false;
   switch (code) {
     case 'v': {
       auto ret = decode<int32_t>();
       if (!ret) {
         return nullptr;
       }
-      if (!ReadNumsObject(*ret)) {
+      if (!ReadNumsObject(*ret, end)) {
         return nullptr;
       }
       break;
@@ -79,6 +87,7 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
       if (!ret.first) {
         return nullptr;
       }
+      end = true;
       auto len_code = ret.second;
 
       switch (len_code) {
@@ -88,7 +97,7 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
             return nullptr;
           }
           auto len = ret.second;
-          if (!ReadNumsObject(len)) {
+          if (!ReadNumsObject(len, end)) {
             return nullptr;
           }
           break;
@@ -99,7 +108,7 @@ std::unique_ptr<TypedListObject> Decoder::decode() {
             return nullptr;
           }
           auto len = ret.second;
-          if (!ReadNumsObject(len)) {
+          if (!ReadNumsObject(len, end)) {
             return nullptr;
           }
           break;
@@ -140,6 +149,11 @@ std::unique_ptr<UntypedListObject> Decoder::decode() {
         return false;
       }
       obj_list.emplace_back(std::move(o));
+    }
+    // Skip last 'z'
+    auto ret = reader_->read<uint8_t>();
+    if (!ret.first || ret.second != 'z') {
+      return false;
     }
     return true;
   };

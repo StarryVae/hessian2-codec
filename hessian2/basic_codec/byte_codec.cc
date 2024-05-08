@@ -7,7 +7,7 @@ constexpr size_t CHUNK_SIZE = 1024;
 }
 
 // # 8-bit binary data split into 64k chunks
-// ::= x41(A) b1 b0 <binary-data> binary # non-final chunk
+// ::= x62(A) b1 b0 <binary-data> binary # non-final chunk
 // ::= x42(B) b1 b0 <binary-data>        # final chunk
 // ::= [x20-x2f] <binary-data>           # binary data of length 0-15
 // ::= [x34-x37] <binary-data>           # binary data of length 0-1023
@@ -43,17 +43,6 @@ bool decodeBytesWithReader(std::vector<uint8_t> &output, ReaderPtr &reader) {
         return false;
       }
       return true;
-    case 0x34:
-    case 0x35:
-    case 0x36:
-    case 0x37: {
-      auto res = reader->read<uint8_t>();
-      if (!res.first ||
-          !readBytes(output, reader, ((code - 0x34) << 8) + res.second, true)) {
-        return false;
-      }
-      return true;
-    }
     case 0x42: {
       auto res = reader->readBE<uint16_t>();
       if (!res.first) {
@@ -61,7 +50,7 @@ bool decodeBytesWithReader(std::vector<uint8_t> &output, ReaderPtr &reader) {
       }
       return readBytes(output, reader, res.second, true);
     }
-    case 0x41: {
+    case 0x62: {
       auto res = reader->readBE<uint16_t>();
       if (!res.first) {
         return false;
@@ -73,7 +62,7 @@ bool decodeBytesWithReader(std::vector<uint8_t> &output, ReaderPtr &reader) {
 }
 
 // # 8-bit binary data split into 64k chunks
-// ::= x41('A') b1 b0 <binary-data> binary # non-final chunk
+// ::= x62('A') b1 b0 <binary-data> binary # non-final chunk
 // ::= x42('B') b1 b0 <binary-data>        # final chunk
 // ::= [x20-x2f] <binary-data>  # binary data of length 0-15
 // ::= [x34-x37] <binary-data>  # binary data of length 0-1023
@@ -86,17 +75,10 @@ bool Encoder::encode(const std::vector<uint8_t> &data) {
         absl::string_view(std::move(std::string(data.begin(), data.end()))));
     return true;
   }
-  if (size < 1024) {
-    writer_->writeByte(0x34 + (size >> 8));
-    writer_->writeByte(size);
-    writer_->rawWrite(
-        absl::string_view(std::move(std::string(data.begin(), data.end()))));
-    return true;
-  }
 
   uint32_t offset = 0;
   while (size > CHUNK_SIZE) {
-    writer_->writeByte(0x41);
+    writer_->writeByte(0x62);
     writer_->writeBE<uint16_t>(CHUNK_SIZE);
     size -= CHUNK_SIZE;
     writer_->rawWrite(absl::string_view(std::move(std::string(

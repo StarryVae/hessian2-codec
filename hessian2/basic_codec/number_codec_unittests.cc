@@ -154,17 +154,17 @@ TEST_F(NumberCodecTest, DecodeDouble) {
   }
 
   {
-    std::string data{0x5d};
+    std::string data{0x69};
     decodeFail<double>(data);
   }
 
   {
-    std::string data{0x5e};
+    std::string data{0x6a};
     decodeFail<double>(data);
   }
 
   {
-    std::string data{0x5f};
+    std::string data{0x6b};
     decodeFail<double>(data);
   }
 
@@ -179,53 +179,53 @@ TEST_F(NumberCodecTest, DecodeDouble) {
   }
 
   {
-    std::string data{0x5b};
+    std::string data{0x67};
     decodeSucc<double>(data, 0.0, 1);
   }
 
   {
-    std::string data{0x5c};
+    std::string data{0x68};
     decodeSucc<double>(data, 1.0, 1);
   }
 
   {
-    char buf[] = {0x5d, 0x00};
+    char buf[] = {0x69, 0x00};
     std::string data(buf, 2);
     decodeSucc<double>(data, 0.0, 2);
   }
 
   {
-    unsigned char buf[] = {0x5d, 0x80};
+    unsigned char buf[] = {0x69, 0x80};
     std::string data(reinterpret_cast<char *>(buf), 2);
     decodeSucc<double>(data, -128.0, 2);
   }
 
   {
-    unsigned char buf[] = {0x5d, 0x7f};
+    unsigned char buf[] = {0x69, 0x7f};
     std::string data(reinterpret_cast<char *>(buf), 2);
     decodeSucc<double>(data, 127.0, 2);
   }
 
   {
-    unsigned char buf[] = {0x5e, 0x00, 0x00};
+    unsigned char buf[] = {0x6a, 0x00, 0x00};
     std::string data(reinterpret_cast<char *>(buf), 3);
     decodeSucc<double>(data, 0.0, 3);
   }
 
   {
-    unsigned char buf[] = {0x5e, 0x80, 0x00};
+    unsigned char buf[] = {0x6a, 0x80, 0x00};
     std::string data(reinterpret_cast<char *>(buf), 3);
     decodeSucc<double>(data, -32768.0, 3);
   }
 
   {
-    unsigned char buf[] = {0x5e, 0x7f, 0xff};
+    unsigned char buf[] = {0x6a, 0x7f, 0xff};
     std::string data(reinterpret_cast<char *>(buf), 3);
     decodeSucc<double>(data, 32767.0, 3);
   }
 
   {
-    unsigned char buf[] = {0x5f, 0x00, 0x00, 0x00, 0x00};
+    unsigned char buf[] = {0x6b, 0x00, 0x00, 0x00, 0x00};
     std::string data(reinterpret_cast<char *>(buf), 5);
     decodeSucc<double>(data, 0.0, 5);
   }
@@ -242,13 +242,13 @@ TEST_F(NumberCodecTest, DecodeDouble) {
 TEST_F(NumberCodecTest, EncodeDouble) {
   {
     double val = 0;
-    std::string data{0x5b};
+    std::string data{0x67};
     encodeSucc<double>(val, 1, data);
   }
 
   {
     double val = 1;
-    std::string data{0x5c};
+    std::string data{0x68};
     encodeSucc<double>(val, 1, data);
   }
 
@@ -527,7 +527,7 @@ TEST_F(NumberCodecTest, DecodeInt64) {
   }
 
   {
-    unsigned char buf[] = {0x59, '1'};
+    unsigned char buf[] = {0x77, '1'};
     std::string data(reinterpret_cast<char *>(buf), 1);
     decodeFail<int64_t>(data);
   }
@@ -612,13 +612,13 @@ TEST_F(NumberCodecTest, DecodeInt64) {
   }
   // Four octet longs
   {
-    unsigned char buf[] = {0x59, 0x00, 0x00, 0x00, 0x00};
+    unsigned char buf[] = {0x77, 0x00, 0x00, 0x00, 0x00};
     std::string data(reinterpret_cast<char *>(buf), 5);
     decodeSucc<int64_t>(data, 0, 5);
   }
 
   {
-    unsigned char buf[] = {0x59, 0x00, 0x00, 0x01, 0x2c};
+    unsigned char buf[] = {0x77, 0x00, 0x00, 0x01, 0x2c};
     std::string data(reinterpret_cast<char *>(buf), 5);
     decodeSucc<int64_t>(data, 300, 5);
   }
@@ -712,12 +712,12 @@ TEST_F(NumberCodecTest, EncodeInt64) {
   }
   // Five octet integers
   {
-    std::string data{0x59, '\x7f', '\xff', '\xff', '\xff'};
+    std::string data{0x77, '\x7f', '\xff', '\xff', '\xff'};
     encodeSucc<int64_t>(INT32_MAX, 5, data);
   }
 
   {
-    std::string data{0x59, '\x80', '\x00', '\x00', '\x00'};
+    std::string data{0x77, '\x80', '\x00', '\x00', '\x00'};
     encodeSucc<int64_t>(INT32_MIN, 5, data);
   }
   // Eight octet integers

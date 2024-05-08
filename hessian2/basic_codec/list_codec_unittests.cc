@@ -34,12 +34,12 @@ TEST_F(ListCodecTest, InsufficientData) {
   }
 
   {
-    std::string data{0x55, 0x00};
+    std::string data{'v', 0x00};
     decodeTypeListFail(data);
   }
 
   {
-    std::string data{0x55, 0x20, 0x08};
+    std::string data{'v', 0x20, 0x08};
     decodeTypeListFail(data);
   }
 }

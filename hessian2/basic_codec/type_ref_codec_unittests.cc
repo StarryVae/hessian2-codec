@@ -9,7 +9,7 @@ namespace Hessian2 {
 
 TEST(TypeRefCodecTest, Decode) {
   {
-    std::string data{0x53, 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'};
+    std::string data{'t', 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'};
     Hessian2::Decoder decoder(data);
     Object::TypeRef ref("hello");
     auto output = decoder.decode<Object::TypeRef>();
@@ -18,7 +18,7 @@ TEST(TypeRefCodecTest, Decode) {
   }
 
   {
-    std::string data{0x53, 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'};
+    std::string data{'t', 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'};
     unsigned char buf[] = {0x90};
     // Append type ref number 1
     std::string data2(reinterpret_cast<char *>(buf), 1);
@@ -37,7 +37,7 @@ TEST(TypeRefCodecTest, Decode) {
 
 TEST(TypeRefCodecTest, encode) {
   {
-    std::string expect_data{0x05, 'h', 'e', 'l', 'l', 'o'};
+    std::string expect_data{'t', 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'};
     unsigned char buf[] = {0x90};
     // Append type ref number 1
     std::string data2(reinterpret_cast<char *>(buf), 1);

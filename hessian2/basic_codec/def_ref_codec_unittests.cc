@@ -31,21 +31,21 @@ TEST_F(DefinitionTest, InsufficientData) {
   }
 
   {
-    std::string data{'C'};
+    std::string data{'O'};
     decodeFail(data);
   }
 
   {
-    std::string data{'C', 0x05, 'h', 'e'};
+    std::string data{'O', 0x05, 'h', 'e'};
     decodeFail(data);
   }
 }
 
 TEST(DefRefCodecTest, Decode) {
   {
-    unsigned char buf[] = {'C',  0x05, 'h', 'e', 'l', 'l',  'o',  0x92,
-                           0x05, 'c',  'o', 'l', 'o', 'r',  0x05, 'm',
-                           'o',  'd',  'e', 'l', 'O', 0x90, 0x60, 0x61};
+    unsigned char buf[] = {'O',  0x95, 'h', 'e', 'l', 'l', 'o',  0x92,
+                           0x05, 'c',  'o', 'l', 'o', 'r', 0x05, 'm',
+                           'o',  'd',  'e', 'l', 'o', 0x90};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Hessian2::Decoder decoder(data);
     Object::RawDefinition def;
@@ -61,23 +61,14 @@ TEST(DefRefCodecTest, Decode) {
     EXPECT_EQ(def, *output2->data_);
     EXPECT_EQ(output->data_, output2->data_);
     EXPECT_EQ(1, decoder.getDefRefSize());
-
-    auto output3 = decoder.decode<Object::Definition>();
-    EXPECT_EQ(def, *output3->data_);
-    EXPECT_EQ(output3->data_, output2->data_);
-    EXPECT_EQ(output3->data_, output->data_);
-    EXPECT_EQ(1, decoder.getDefRefSize());
-
-    auto output4 = decoder.decode<Object::Definition>();
-    EXPECT_TRUE(output4 == nullptr);
   }
 }
 
 TEST(DefRefCodecTest, encode) {
   {
-    unsigned char buf[] = {'C',  0x05, 'h', 'e', 'l', 'l', 'o',
-                           0x92, 0x05, 'c', 'o', 'l', 'o', 'r',
-                           0x05, 'm',  'o', 'd', 'e', 'l', 0x60};
+    unsigned char buf[] = {'O',  0x95, 'h', 'e', 'l', 'l', 'o',  0x92,
+                           0x05, 'c',  'o', 'l', 'o', 'r', 0x05, 'm',
+                           'o',  'd',  'e', 'l', 'o', 0x90};
     std::string data(reinterpret_cast<char *>(buf), sizeof(buf));
     Object::RawDefinition def;
     def.type_ = "hello";

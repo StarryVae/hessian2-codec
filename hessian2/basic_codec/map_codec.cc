@@ -1,4 +1,5 @@
 #include "hessian2/basic_codec/map_codec.hpp"
+#include <iostream>
 
 namespace Hessian2 {
 
@@ -101,8 +102,11 @@ bool Encoder::encode(const TypedMapObject& value) {
   ABSL_ASSERT(typed_map.has_value());
   auto& typed_map_value = typed_map.value().get();
   writer_->writeByte('M');
-  Object::TypeRef type_ref(typed_map_value.type_name_);
-  encode<Object::TypeRef>(type_ref);
+
+  writer_->writeByte('t');
+  writer_->writeBE<uint16_t>(typed_map_value.type_name_.length());
+  writer_->rawWrite(typed_map_value.type_name_);
+
   for (const auto& elem : typed_map_value.field_name_and_value_) {
     encode<Object>(*elem.first);
     encode<Object>(*elem.second);

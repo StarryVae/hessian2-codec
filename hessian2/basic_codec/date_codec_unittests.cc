@@ -56,12 +56,12 @@ TEST_F(DateCodecTest, decode) {
 
   // Insufficient Data
   {
-    std::string data{0x4a, 0x00, 0x00, 0x00};
+    std::string data{0x64, 0x00, 0x00, 0x00};
     decodeFail<std::chrono::milliseconds>(data);
   }
 
   {
-    std::string data{0x4b, 0x00, 0x00, 0x00};
+    std::string data{0x64, 0x00, 0x00, 0x00};
     decodeFail<std::chrono::milliseconds>(data);
   }
 }

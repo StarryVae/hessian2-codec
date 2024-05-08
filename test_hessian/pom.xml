@@ -31,9 +31,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.caucho</groupId>
+            <groupId>com.alipay.sofa</groupId>
             <artifactId>hessian</artifactId>
-            <version>4.0.60</version>
+            <version>3.3.6</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

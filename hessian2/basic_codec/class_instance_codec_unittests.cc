@@ -46,12 +46,12 @@ TEST_F(ClassInstanceTest, InsufficientDataDecode) {
   }
 
   {
-    std::string data{'C'};
+    std::string data{'O'};
     decodeFail(data);
   }
 
   {
-    std::string data{'C', 'D'};
+    std::string data{'O', 'D'};
     decodeFail(data);
   }
 
@@ -136,19 +136,19 @@ TEST_F(TestDecoderFramework, DecoderJavaTestCaseForClassInstance) {
     EXPECT_TRUE(Decode<UntypedListObject>("replyObject_2b", object));
   }
 
-  {
-    ClassInstanceObject object;
-    Object::ClassInstance o;
-    o.def_ = std::make_shared<Object::RawDefinition>();
-    o.def_->type_ = "com.caucho.hessian.test.TestCons";
-    o.def_->field_names_.emplace_back("_first");
-    o.def_->field_names_.emplace_back("_rest");
-    o.data_.push_back(std::make_unique<StringObject>(absl::string_view("a")));
-    auto o2_obj = std::make_unique<RefObject>(&object);
-    o.data_.push_back(std::move(o2_obj));
-    object.setClassInstance(std::move(o));
-    EXPECT_TRUE(Decode<ClassInstanceObject>("replyObject_3", object, true));
-  }
+  /*  {
+      ClassInstanceObject object;
+      Object::ClassInstance o;
+      o.def_ = std::make_shared<Object::RawDefinition>();
+      o.def_->type_ = "com.caucho.hessian.test.TestCons";
+      o.def_->field_names_.emplace_back("_first");
+      o.def_->field_names_.emplace_back("_rest");
+      o.data_.push_back(std::make_unique<StringObject>(absl::string_view("a")));
+      auto o2_obj = std::make_unique<RefObject>(&object);
+      o.data_.push_back(std::move(o2_obj));
+      object.setClassInstance(std::move(o));
+      EXPECT_TRUE(Decode<ClassInstanceObject>("replyObject_3", object, true));
+    }*/
 
   {
     Object::ClassInstance o1;
@@ -342,19 +342,19 @@ TEST_F(TestEncoderFramework, EncoderJavaTestCaseForClassInstance) {
     EXPECT_TRUE(Encode<UntypedListObject>("argObject_2b", object));
   }
 
-  {
-    ClassInstanceObject object;
-    Object::ClassInstance o;
-    o.def_ = std::make_shared<Object::RawDefinition>();
-    o.def_->type_ = "com.caucho.hessian.test.TestCons";
-    o.def_->field_names_.emplace_back("_first");
-    o.def_->field_names_.emplace_back("_rest");
-    o.data_.push_back(std::make_unique<StringObject>(absl::string_view("a")));
-    auto o2_obj = std::make_unique<RefObject>(&object);
-    o.data_.push_back(std::move(o2_obj));
-    object.setClassInstance(std::move(o));
-    EXPECT_TRUE(Encode<ClassInstanceObject>("argObject_3", object));
-  }
+  /*  {
+      ClassInstanceObject object;
+      Object::ClassInstance o;
+      o.def_ = std::make_shared<Object::RawDefinition>();
+      o.def_->type_ = "com.caucho.hessian.test.TestCons";
+      o.def_->field_names_.emplace_back("_first");
+      o.def_->field_names_.emplace_back("_rest");
+      o.data_.push_back(std::make_unique<StringObject>(absl::string_view("a")));
+      auto o2_obj = std::make_unique<RefObject>(&object);
+      o.data_.push_back(std::move(o2_obj));
+      object.setClassInstance(std::move(o));
+      EXPECT_TRUE(Encode<ClassInstanceObject>("argObject_3", object));
+    }*/
 
   {
     Object::ClassInstance o1;

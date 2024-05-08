@@ -268,7 +268,7 @@ TEST_F(StringCodecTest, Decode) {
   }
 
   {
-    std::string data{0x52, 't'};
+    std::string data{0x73, 't'};
     decodeFail(data);
   }
 
@@ -320,16 +320,9 @@ TEST_F(StringCodecTest, Decode) {
   }
 
   {
-    std::string data{0x52, 0x00, 0x07, 'h', 'e', 'l', 'l', 'o',
+    std::string data{0x73, 0x00, 0x07, 'h', 'e', 'l', 'l', 'o',
                      ',',  ' ',  0x05, 'w', 'o', 'r', 'l', 'd'};
     decodeSucc(data, "hello, world", 16);
-  }
-
-  {
-    std::string expect_string(257, 't');
-    std::string prefix{0x31, 0x01};
-    std::string data = prefix.append(expect_string);
-    decodeSucc(data, expect_string, 259);
   }
 }
 
@@ -366,19 +359,19 @@ TEST_F(StringCodecTest, Encode) {
 
   {
     std::string input(257, 't');
-    encodeSucc(input, 259);
+    encodeSucc(input, 260);
   }
 
   {
     std::string test_str(32, 't');
-    std::string expect_str = "\x30\x20" + test_str;
-    encodeSucc(test_str, 34, expect_str);
+    std::string expect_str = std::string{0x53, 0x00, 0x20} + test_str;
+    encodeSucc(test_str, 35, expect_str);
   }
 
   {
     std::string input(256, 't');
-    std::string expect_str = std::string{0x31, 0x00} + input;
-    encodeSucc(input, 258, expect_str);
+    std::string expect_str = std::string{0x53, 0x01, 0x00} + input;
+    encodeSucc(input, 259, expect_str);
   }
 
   {
@@ -389,7 +382,7 @@ TEST_F(StringCodecTest, Encode) {
 
   {
     std::string input(65536, 't');
-    std::string expect_str = "\x52\x80" + std::string(1, '\0') +
+    std::string expect_str = "\x73\x80" + std::string(1, '\0') +
                              std::string(32768, 't') + "\x53\x80" +
                              std::string(1, '\0') + std::string(32768, 't');
     encodeSucc(input, 65542, expect_str);

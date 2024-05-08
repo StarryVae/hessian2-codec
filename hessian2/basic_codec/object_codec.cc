@@ -89,65 +89,57 @@ std::unique_ptr<Object> Decoder::decode() {
     }
 
     // Date
-    case 0x4a:
-    case 0x4b: {
+    case 0x64: {
       auto ret = decode<std::chrono::milliseconds>();
       return ret == nullptr ? nullptr : std::make_unique<DateObject>(*ret);
     }
 
     // Double
-    case 0x5b:
-    case 0x5c:
-    case 0x5d:
-    case 0x5e:
-    case 0x5f:
+    case 0x67:
+    case 0x68:
+    case 0x69:
+    case 0x6a:
+    case 0x6b:
     case 'D': {
       auto ret = decode<double>();
       return ret == nullptr ? nullptr : std::make_unique<DoubleObject>(*ret);
     }
 
     // Typed list
-    case 'V':
-    case 0x55:
-    case 0x70:
-    case 0x71:
-    case 0x72:
-    case 0x73:
-    case 0x74:
-    case 0x75:
-    case 0x76:
-    case 0x77: {
+    case 'v': {
       auto ret = decode<TypedListObject>();
       return ret;
     }
 
     // Untyped list
-    case 0x57:
-    case 0x58:
-    case 0x78:
-    case 0x79:
-    case 0x7a:
-    case 0x7b:
-    case 0x7c:
-    case 0x7d:
-    case 0x7e:
-    case 0x7f: {
-      auto ret = decode<UntypedListObject>();
-      return ret;
+    case 'V': {
+      auto ret = reader_->peek<uint8_t>(1);
+      if (!ret.first) {
+        return nullptr;
+      }
+      if (ret.second == 't') {
+        auto ret1 = decode<TypedListObject>();
+        return ret1;
+      }
+      auto ret2 = decode<UntypedListObject>();
+      return ret2;
     }
 
     // Typed map
     case 'M': {
-      auto ret = decode<TypedMapObject>();
-      return ret;
+      auto ret = reader_->peek<uint8_t>(1);
+      if (!ret.first) {
+        return nullptr;
+      }
+      if (ret.second == 't') {
+        auto ret1 = decode<TypedMapObject>();
+        return ret1;
+      }
+      auto ret2 = decode<UntypedMapObject>();
+      return ret2;
     }
 
-    case 'H': {
-      auto ret = decode<UntypedMapObject>();
-      return ret;
-    }
-
-    case 'C': {
+    case 'O': {
       auto ret = decode<Object::Definition>();
       if (!ret) {
         return nullptr;
@@ -155,28 +147,13 @@ std::unique_ptr<Object> Decoder::decode() {
       return decode<Object>();
     }
 
-    case 'O':
-    case 0x60:
-    case 0x61:
-    case 0x62:
-    case 0x63:
-    case 0x64:
-    case 0x65:
-    case 0x66:
-    case 0x67:
-    case 0x68:
-    case 0x69:
-    case 0x6a:
-    case 0x6b:
-    case 0x6c:
-    case 0x6d:
-    case 0x6e:
-    case 0x6f: {
+    case 'o': {
       auto ret = decode<ClassInstanceObject>();
       return ret;
     }
 
-    case 0x51: {
+    case 0x4a:
+    case 0x52: {
       auto ret = decode<RefObject>();
       return ret;
     }
@@ -186,8 +163,7 @@ std::unique_ptr<Object> Decoder::decode() {
   }
 
   // String
-  if (code <= 0x1f || (code >= 0x30 && code <= 0x33) || code == 0x52 ||
-      code == 0x53) {
+  if (code <= 0x1f || code == 0x73 || code == 0x53) {
     auto ret = decode<std::string>();
     return ret == nullptr ? nullptr
                           : std::make_unique<StringObject>(std::move(ret));
@@ -203,7 +179,7 @@ std::unique_ptr<Object> Decoder::decode() {
 
   // Long
   if ((code >= 0x38 && code <= 0x3f) || (code >= 0xd8 && code <= 0xef) ||
-      code >= 0xf0 || code == 0x59 || code == 0x4c) {
+      code >= 0xf0 || code == 0x77 || code == 0x4c) {
     auto ret = decode<int64_t>();
     return ret == nullptr ? nullptr : std::make_unique<LongObject>(*ret);
   }

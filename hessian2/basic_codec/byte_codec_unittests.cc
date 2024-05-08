@@ -161,7 +161,7 @@ TEST_F(ByteCodecTest, Decode) {
   }
 
   {
-    std::string data{0x41};
+    std::string data{0x62};
     decodeFail(data);
   }
 
@@ -199,25 +199,6 @@ TEST_F(ByteCodecTest, Decode) {
 
   {
     std::vector<uint8_t> expect_output;
-    std::string expect_string = {0x37, 0x10};
-    expect_string.append(std::string(784, 't'));
-    expect_output.insert(expect_output.begin(), expect_string.begin() + 2,
-                         expect_string.end());
-    decodeSucc(expect_string, expect_output, 786);
-  }
-
-  {
-    std::vector<uint8_t> expect_output;
-    unsigned char buf[] = {0x37, 0xFF};
-    std::string expect_string(reinterpret_cast<char *>(&buf), 2);
-    expect_string.append(std::string(1023, 't'));
-    expect_output.insert(expect_output.begin(), expect_string.begin() + 2,
-                         expect_string.end());
-    decodeSucc(expect_string, expect_output, 1025);
-  }
-
-  {
-    std::vector<uint8_t> expect_output;
     std::string expect_string = {0x42, 0x10, 0x00};
     expect_string.append(std::string(4096, 't'));
     expect_output.insert(expect_output.begin(), expect_string.begin() + 3,
@@ -230,14 +211,6 @@ TEST_F(ByteCodecTest, encode) {
   {
     std::string expect_string{0x23, 0x01, 0x02, 0x03};
     encodeSucc(std::vector<uint8_t>{0x01, 0x02, 0x03}, 4, expect_string);
-  }
-
-  {
-    std::vector<uint8_t> data;
-    std::string expect_string = {0x37, 0x10};
-    expect_string.append(std::string(784, 't'));
-    data.insert(data.begin(), expect_string.begin() + 2, expect_string.end());
-    encodeSucc(data, 786, expect_string);
   }
 }
 
